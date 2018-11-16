@@ -16,8 +16,7 @@ def status():
 @post('/hook')
 def hook():
     request.params.apikey == apikey or abort(403, 'Forbidden')
-    print dumps(request.headers)
-    print dumps(request.params)
+    print 'Request params: ' + dumps(request.params.dict)
     params = request.json or abort(400, 'Params not found')
     params['push_data']['tag'] == 'master' or abort(304, 'Not modified')
     container = valid_containers[params['repository']['repo_name']] or abort(404, 'Valid container not found')
