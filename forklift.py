@@ -1,5 +1,5 @@
 from bottle import get, post, request, abort, run
-from os import spawnl
+import os
 
 # Must get provided in request (i.e. /hook?apikey=12345678)
 apikey = '1234'
@@ -23,6 +23,6 @@ def hook():
 
 def restart(container_name):
     cmd = "{}/{}/restart".format(docker_root, container_name)
-    return spawnl(os.P_NOWAIT, cmd)
+    return os.spawnl(os.P_NOWAIT, cmd)
 
 run(host='0.0.0.0', port=8000, debug=False, reloader=False)
