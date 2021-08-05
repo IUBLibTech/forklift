@@ -1,0 +1,8 @@
+[bottle]
+debug = False
+
+[forklift]
+port = 8080
+api_key = 12345
+docker_root = /srv/docker
+valid_containers = {'docker_user/image_name':'target_dir_in_docker_root'}
