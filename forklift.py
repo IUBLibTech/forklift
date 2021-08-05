@@ -1,32 +1,38 @@
 import bottle
 import sys, os, subprocess, urllib.request
-from bottle import get, post, request, abort, run
+from bottle import Bottle, get, post, request, abort, run
 from json import dumps
 from ast import literal_eval
 
 sys.version_info.major >= 3 or sys.exit('ERROR: Python 3 required')
-app = bottle.default_app()
+app = Bottle()
 app.config.load_config('./forklift.config')
 
-@get('/status')
+@app.get('/status')
 def status():
     return 'OK'
 
-@post('/hook')
+@app.post('/hook')
 def hook():
     request.params.apikey == app.config['forklift.api_key'] or abort(403, 'Forbidden')
     print("Request params: {}".format(dumps(request.params.dict)))
     params = request.json or abort(400, 'Params not found')
-    params['push_data']['tag'] == 'master' or abort(304, 'Not modified')
+    params['push_data']['tag'] == 'latest' or abort(304, 'Not modified')
     repo_name = params['repository']['repo_name']
     container = validate_container(repo_name)
     container or abort(404, "Valid container {}:{} not found".format(repo_name, container))
     validate_webhook(params.get('callback_url'), 'success')
-    output = restart(container) or abort(500, 'Restart failed')
+    try:
+        output = restart(container)
+    except CalledProcessError as e:
+        abort(500, 'Restart failed: {} {}'.format(e.returncode, e.output))
     return "OK\n{}".format(output)
 
 def validate_container(key):
-    return literal_eval(app.config['forklift.valid_containers'])[key]
+    try:
+        return literal_eval(app.config['forklift.valid_containers'])[key]
+    except KeyError:
+        return False
 
 def validate_webhook(url, state):
     if url == None: return
@@ -41,4 +47,5 @@ def restart(container_name):
     return subprocess.check_output(cmd)
     # return os.spawnl(os.P_NOWAIT, cmd)
 
-run(host='0.0.0.0', port=app.config['forklift.port'], debug=False, reloader=False)
+if __name__ == '__main__':
+    run(app, host='0.0.0.0', port=app.config['forklift.port'], debug=False, reloader=False)
