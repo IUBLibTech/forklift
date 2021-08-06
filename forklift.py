@@ -1,6 +1,7 @@
-import bottle
-import sys, os, subprocess, urllib.request
-from bottle import Bottle, get, post, request, abort, run
+import sys
+import subprocess
+import urllib.request
+from bottle import Bottle, request, abort, run
 from json import dumps
 from ast import literal_eval
 
@@ -8,9 +9,11 @@ sys.version_info.major >= 3 or sys.exit('ERROR: Python 3 required')
 app = Bottle()
 app.config.load_config('./forklift.config')
 
+
 @app.get('/status')
 def status():
     return 'OK'
+
 
 @app.post('/hook')
 def hook():
@@ -27,7 +30,7 @@ def hook():
     validate_webhook(params.get('callback_url'), 'success')
     try:
         output = restart(container['target'])
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         abort(500, 'Restart failed: {} {}'.format(e.returncode, e.output))
     return "OK\n{}".format(output)
 
@@ -38,21 +41,26 @@ def validate_container(key):
     except KeyError:
         return False
 
+
 def validate_tag(tag, container):
     return tag == container['tag']
 
+
 def validate_webhook(url, state):
-    if url == None: return
-    data = dumps({'state':state}).encode()
+    if url is None:
+        return
+    data = dumps({'state': state}).encode()
     req = urllib.request.Request(url=url, data=data, method='POST')
     print("Validating webhook: {} => {}".format(state, url))
     return urllib.request.urlopen(req)
+
 
 def restart(target):
     cmd = "{}/{}".format(app.config['forklift.docker_root'], target)
     print("Running command: {}".format(cmd))
     return subprocess.check_output(cmd)
     # return os.spawnl(os.P_NOWAIT, cmd)
+
 
 if __name__ == '__main__':
     run(app, host='0.0.0.0', port=app.config['forklift.port'], debug=False, reloader=False)
