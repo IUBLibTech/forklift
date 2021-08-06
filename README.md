@@ -1,4 +1,5 @@
 # forklift
+[![Python application](https://github.com/IUBLibTech/forklift/actions/workflows/python-app.yml/badge.svg)](https://github.com/IUBLibTech/forklift/actions/workflows/python-app.yml)
 
 Listener for Docker Hub webhooks.
 
