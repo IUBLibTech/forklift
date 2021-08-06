@@ -5,4 +5,5 @@ debug = False
 port = 8080
 api_key = 12345
 docker_root = /srv/docker
-valid_containers = {'docker_user/image_name':'target_dir_in_docker_root'}
+valid_containers = {'docker_user/image_name': {'target': 'target_dir/update', 'tag': 'latest'},
+                    'other_user/other_name': {'target': 'other_target_dir/update', 'tag': 'stable-0.1-rc1'}}

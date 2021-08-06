@@ -19,7 +19,7 @@ def test_hook_no_json():
     assert app.post_json('/hook?apikey=12345', expect_errors=True).status == '400 Bad Request'
 
 def test_hook_tag_mismatch():
-    data = {'push_data': {'tag': 'badtag'}}
+    data = {'push_data': {'tag': 'badtag'}, 'repository': {'repo_name': 'docker_user/image_name'}}
     assert app.post_json('/hook?apikey=12345', data, expect_errors=True).status == '304 Not Modified'
 
 def test_hook_invalid_container():
@@ -30,14 +30,20 @@ def test_hook_restart_failed(mocker):
     mocker.patch('subprocess.check_output', side_effect=subprocess.CalledProcessError)
     data = {'push_data': {'tag': 'latest'}, 'repository': {'repo_name': 'docker_user/image_name'}}
     assert app.post_json('/hook?apikey=12345', data, expect_errors=True).status == '500 Internal Server Error'
-    subprocess.check_output.assert_called_once()
+    subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
 
 def test_hook_success(mocker):
     mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
     data = {'push_data': {'tag': 'latest'}, 'repository': {'repo_name': 'docker_user/image_name'}}
     assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
-    subprocess.check_output.assert_called_once()
+    subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
+
+def test_hook_success_other(mocker):
+    mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
+    data = {'push_data': {'tag': 'stable-0.1-rc1'}, 'repository': {'repo_name': 'other_user/other_name'}}
+    assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
+    subprocess.check_output.assert_called_once_with('/srv/docker/other_target_dir/update')
 
 def test_validate_container():
     assert forklift.validate_container('bad_docker_user/image_name') == False
-    assert forklift.validate_container('docker_user/image_name') == 'target_dir_in_docker_root'
+    assert forklift.validate_container('docker_user/image_name')['target'] == 'target_dir/update'
