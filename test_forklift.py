@@ -3,7 +3,7 @@ import forklift
 import subprocess
 
 forklift_app = forklift.app
-forklift_app.config.load_config('./forklift.config.example')
+forklift_app.config.load_config('./example.config')
 app = WebTestApp(forklift_app)
 
 
@@ -25,7 +25,7 @@ def test_hook_no_json():
 
 def test_hook_tag_mismatch():
     data = {'push_data': {'tag': 'badtag'}, 'repository': {'repo_name': 'docker_user/image_name'}}
-    assert app.post_json('/hook?apikey=12345', data, expect_errors=True).status == '304 Not Modified'
+    assert app.post_json('/hook?apikey=12345', data, expect_errors=True).status == '404 Not Found'
 
 
 def test_hook_invalid_container():
@@ -47,7 +47,14 @@ def test_hook_success(mocker):
     subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
 
 
-def test_hook_success_other(mocker):
+def test_hook_success_alt_tag(mocker):
+    mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
+    data = {'push_data': {'tag': 'main'}, 'repository': {'repo_name': 'docker_user/image_name'}}
+    assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
+    subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
+
+
+def test_hook_success_other_regexp(mocker):
     mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
     data = {'push_data': {'tag': 'stable-0.1-rc1'}, 'repository': {'repo_name': 'other_user/other_name'}}
     assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
@@ -55,5 +62,5 @@ def test_hook_success_other(mocker):
 
 
 def test_validate_container():
-    assert not forklift.validate_container('bad_docker_user/image_name')
-    assert forklift.validate_container('docker_user/image_name')['target'] == 'target_dir/update'
+    assert not forklift.validate_container('bad_docker_user/image_name', 'latest')
+    assert forklift.validate_container('docker_user/image_name', 'latest') == 'target_dir/update'

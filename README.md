@@ -9,16 +9,21 @@ Listener for Docker Hub webhooks.
 `python forklift.py`
 
 ## Configuration
-- Copy `forklift.config.example` to `forklift.config`
+- Copy `example.config` to `forklift.config`
 - Set a secure `api_key`
 - Set `docker_root` to the directory that the target script is run relative to.
 - Setup `valid_containers`
   - Top level key is `{repository name}/{image_name}`.
-  - `target` points to a script to run inside `docker_root`.
-  - `tag` allows only the specified tag to trigger the `target` script.
+  - `tag` allows only the specified tag to trigger the `target` script. This is interpreted as a regular expression.
+  - `target` is a path relative to `docker_root` to the script to run.
+- Create a Docker Hub webhook that calls `https://your_host/hook?apikey={your_apikey}`
 
 ## Development
 `pip install -r requirements_dev.txt`
+
+### Design Notes
+The shell command used to restart a container should use only strings from the program configuration,
+and must not contain any fragments sourced from the request data.
 
 ### Running Tests
 `pytest`
