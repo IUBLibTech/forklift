@@ -34,7 +34,7 @@ def hook():
     container or abort(404, "Valid container {}/{}:{} not found".format(repo_name, container, tag))
 
     # Send a callback request
-    validate_webhook(params.get('callback_url'), 'success')
+    # validate_webhook(params.get('callback_url'), 'success')
 
     # Exec the restart command
     output = restart(container) or abort(500, 'Restart failed')
