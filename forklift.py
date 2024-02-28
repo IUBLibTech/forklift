@@ -40,6 +40,26 @@ def hook():
     output = restart(container) or abort(500, 'Restart failed')
     return "OK\n{}".format(output)
 
+@post('/gh_hook')
+def gh_hook():
+    request.params.apikey == app.config['forklift.api_key'] or abort(403, 'Forbidden')
+    logging.debug("Request params: {}".format(dumps(request.params.dict)))
+    params = request.json or abort(400, 'Params not found')
+    event = request.get_header('X-GitHub-Event')
+
+    # Get data from webhook data
+    tag = params['ref']
+    repo_name = params['repository']['full_name']
+
+    # Verify a configuration exists for this repo_name and tag combo
+    container = validate_container(repo_name, tag)
+    container or abort(404, "Valid container {}/{}:{} not found".format(repo_name, container, tag))
+
+    # Exec the restart command
+    if event == 'push':
+        output = restart(container) or abort(500, 'Restart failed')
+        return "{} event: OK\n{}".format(event, output)
+
 
 def validate_container(repo_name, tag):
     try:
