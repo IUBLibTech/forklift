@@ -46,13 +46,17 @@ def test_hook_success(mocker):
     assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
     subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
 
+def test_gh_hook_success(mocker):
+    mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
+    data = {'ref': 'refs/heads/main', 'repository': {'full_name': 'gh_user/repo_name'}}
+    assert app.post_json('/gh_hook?apikey=12345', data, headers={'X-GitHub-Event': 'push'}).status == '200 OK'
+    subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
 
 def test_hook_success_alt_tag(mocker):
     mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
     data = {'push_data': {'tag': 'main'}, 'repository': {'repo_name': 'docker_user/image_name'}}
     assert app.post_json('/hook?apikey=12345', data).status == '200 OK'
     subprocess.check_output.assert_called_once_with('/srv/docker/target_dir/update')
-
 
 def test_hook_success_other_regexp(mocker):
     mocker.patch('subprocess.check_output', return_value="Mocked subprocess call success")
