@@ -1,7 +1,7 @@
 # forklift
 [![Python application](https://github.com/IUBLibTech/forklift/actions/workflows/python-app.yml/badge.svg)](https://github.com/IUBLibTech/forklift/actions/workflows/python-app.yml)
 
-Listener for Docker Hub webhooks.
+Listener for Docker Hub and Github webhooks.
 
 ## Installation
 `pip install -r requirements.txt`

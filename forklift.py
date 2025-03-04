@@ -48,17 +48,23 @@ def gh_hook():
     event = request.get_header('X-GitHub-Event')
 
     # Get data from webhook data
-    tag = params['ref']
-    repo_name = params['repository']['full_name']
+    match event:
+        case 'package':
+            tag = params['container_metadata']['tag']['name']
+            repo_name = params['repository']['full_name']
+        case 'push':
+            tag = params['ref']
+            repo_name = params['repository']['full_name']
+        case _:
+            abort(400, 'Unsupported event type')
 
     # Verify a configuration exists for this repo_name and tag combo
     container = validate_container(repo_name, tag)
     container or abort(404, "Valid container {}/{}:{} not found".format(repo_name, container, tag))
 
     # Exec the restart command
-    if event == 'push':
-        output = restart(container) or abort(500, 'Restart failed')
-        return "{} event: OK\n{}".format(event, output)
+    output = restart(container) or abort(500, 'Restart failed')
+    return "{} event: OK\n{}".format(event, output)
 
 
 def validate_container(repo_name, tag):
